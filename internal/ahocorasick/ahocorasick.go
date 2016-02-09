@@ -16,10 +16,11 @@ type Match struct {
 	Value   interface{}
 }
 
-type nodeData struct {
-	pattern *string
-	offset  int
-	value   interface{}
+type Data struct {
+	Pattern *string
+	Offset  int
+	Value   interface{}
+
 	failure *trie.TernaryNode
 }
 
@@ -31,17 +32,17 @@ func New() *Matcher {
 
 func (m *Matcher) Add(pattern string, v interface{}) {
 	_, n := utf8.DecodeLastRuneInString(pattern)
-	m.trie.Put(pattern, &nodeData{
-		pattern: &pattern,
-		offset:  len(pattern) - n,
-		value:   v,
+	m.trie.Put(pattern, &Data{
+		Pattern: &pattern,
+		Offset:  len(pattern) - n,
+		Value:   v,
 	})
 }
 
 func (m *Matcher) Compile() error {
 	m.trie.Balance()
 	root := m.trie.Root().(*trie.TernaryNode)
-	root.SetValue(&nodeData{failure: root})
+	root.SetValue(&Data{failure: root})
 	// fill data.failure of each node.
 	trie.EachWidth(m.trie, func(n trie.Node) bool {
 		parent := n.(*trie.TernaryNode)
@@ -54,10 +55,19 @@ func (m *Matcher) Compile() error {
 	return nil
 }
 
+func (m *Matcher) Iter() *Iter {
+	r := m.trie.Root().(*trie.TernaryNode)
+	return &Iter{
+		trie: m.trie,
+		root: r,
+		curr: r,
+	}
+}
+
 func fillFailure(curr, root, parent *trie.TernaryNode) {
 	data := getNodeData(curr)
 	if data == nil {
-		data = &nodeData{}
+		data = &Data{}
 		curr.SetValue(data)
 	}
 	if parent == root {
@@ -103,19 +113,19 @@ func getNextNode(node, root *trie.TernaryNode, r rune) *trie.TernaryNode {
 func fireAll(curr, root *trie.TernaryNode, ch chan<- Match, idx int) {
 	for curr != root {
 		data := getNodeData(curr)
-		if data.pattern != nil {
+		if data.Pattern != nil {
 			ch <- Match{
-				Index:   idx - data.offset,
-				Pattern: *data.pattern,
-				Value:   data.value,
+				Index:   idx - data.Offset,
+				Pattern: *data.Pattern,
+				Value:   data.Value,
 			}
 		}
 		curr = data.failure
 	}
 }
 
-func getNodeData(node *trie.TernaryNode) *nodeData {
-	d, _ := node.Value().(*nodeData)
+func getNodeData(node *trie.TernaryNode) *Data {
+	d, _ := node.Value().(*Data)
 	return d
 }
 

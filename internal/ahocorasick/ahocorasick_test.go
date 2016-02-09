@@ -6,14 +6,14 @@ import (
 	"github.com/koron/nvcheck/internal/trie"
 )
 
-func checkNode(t *testing.T, node trie.Node, size int, data nodeData) {
+func checkNode(t *testing.T, node trie.Node, size int, data Data) {
 	if node == nil {
 		t.Error("Nil node:", data)
 	}
 	if node.Size() != size {
 		t.Errorf("Unexpected childrens: %d != %d", node.Size(), size)
 	}
-	d := node.Value().(*nodeData)
+	d := node.Value().(*Data)
 	if d == nil {
 		t.Error("Nil data:", data, node)
 	}
@@ -31,14 +31,14 @@ func checkNode(t *testing.T, node trie.Node, size int, data nodeData) {
 	}
 }
 
-func invalidData(failure trie.Node) nodeData {
-	return nodeData{
+func invalidData(failure trie.Node) Data {
+	return Data{
 		failure: failure.(*trie.TernaryNode),
 	}
 }
 
-func validData(pattern string, value interface{}, failure trie.Node) nodeData {
-	return nodeData{
+func validData(pattern string, value interface{}, failure trie.Node) Data {
+	return Data{
 		pattern: &pattern,
 		value:   value,
 		failure: failure.(*trie.TernaryNode),
