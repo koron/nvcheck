@@ -16,18 +16,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	m, err := toMatcher(d)
+	m, err := d.toM()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var hasError bool
+	var found bool
 	for _, n := range flag.Args() {
-		if !findFile(m, n) {
-			hasError = true
+		err := find(m, n)
+		if err != nil {
+			if err == ErrFound {
+				found = true
+				continue
+			}
+			log.Fatal(err)
 		}
 	}
-	if hasError {
+	if found {
 		os.Exit(1)
 	}
 }
