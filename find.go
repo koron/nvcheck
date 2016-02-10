@@ -22,7 +22,7 @@ type Found struct {
 }
 
 func (f *Found) Print(lnum, loff int) {
-	fmt.Printf("%s >> %s at %d\n", f.Text, f.Fix, f.Off)
+	fmt.Printf("%s >> %s at line %d\n", f.Text, f.Fix, lnum)
 }
 
 func toMatcher(d Dict) (*ahocorasick.Matcher, error) {
