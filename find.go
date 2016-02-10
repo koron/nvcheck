@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"unicode"
 
@@ -21,10 +19,6 @@ type Found struct {
 	Fix  string
 }
 
-func (f *Found) Print(lnum, loff int) {
-	fmt.Printf("%s >> %s at %d\n", f.Text, f.Fix, f.Off)
-}
-
 func toMatcher(d Dict) (*ahocorasick.Matcher, error) {
 	m := ahocorasick.New()
 	for k, v := range d {
@@ -40,13 +34,12 @@ func toMatcher(d Dict) (*ahocorasick.Matcher, error) {
 	return m, nil
 }
 
-func findFile(m *ahocorasick.Matcher, name string) {
+func checkFile(s Summary, m *ahocorasick.Matcher, name string) error {
 	f, err := os.Open(name)
 	if err != nil {
-		log.Fatal(err)
+		return nil
 	}
 	defer f.Close()
-
 	it := m.Iter()
 	lr := linereader.New(f)
 	loff := 0
@@ -54,12 +47,11 @@ func findFile(m *ahocorasick.Matcher, name string) {
 	for {
 		l, err := lr.ReadLine()
 		if err != nil {
-			log.Fatal(err)
+			return nil
 		}
 		if l == nil {
 			break
 		}
-		lnum := lr.LineNum()
 		for i, r := range *l {
 			if unicode.IsSpace(r) {
 				continue
@@ -67,7 +59,7 @@ func findFile(m *ahocorasick.Matcher, name string) {
 			ev := it.Put(r)
 			if ev == nil {
 				if last != nil {
-					last.Print(lnum, loff)
+					s.Add(name, lr.LineNum(), last)
 					last = nil
 				}
 				continue
@@ -81,7 +73,7 @@ func findFile(m *ahocorasick.Matcher, name string) {
 				w, _ := d.Value.(*Word)
 				if w.Fix != nil {
 					if last != nil {
-						last.Print(lnum, loff)
+						s.Add(name, lr.LineNum(), last)
 					}
 					last = &Found{
 						Off:  off,
@@ -97,10 +89,15 @@ func findFile(m *ahocorasick.Matcher, name string) {
 					last = nil
 					continue
 				}
-				last.Print(lnum, loff)
+				s.Add(name, lr.LineNum(), last)
 				last = nil
 			}
 		}
+		if last != nil {
+			s.Add(name, lr.LineNum(), last)
+			last = nil
+		}
 		loff += len(*l)
 	}
+	return nil
 }
