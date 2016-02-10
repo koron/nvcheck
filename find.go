@@ -88,7 +88,7 @@ func (c *ctx) find() error {
 			_, n := utf8.DecodeRuneInString(c.content[i:])
 			top := c.top(i+n, w.Text)
 			if top < 0 {
-				return fmt.Errorf("match failure at %d for %s", i+n, w.Text)
+				return fmt.Errorf("match failure for %q in file %s at offset %d", w.Text, c.fname, i+n)
 			}
 			if w.Fix != nil {
 				c.flush(i)
