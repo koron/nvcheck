@@ -69,5 +69,6 @@ func main() {
 	}
 	if len(summary) > 0 {
 		fmt.Println(summary)
+		os.Exit(1)
 	}
 }
