@@ -40,13 +40,14 @@ func toMatcher(d Dict) (*ahocorasick.Matcher, error) {
 	return m, nil
 }
 
-func findFile(m *ahocorasick.Matcher, name string) {
+func findFile(m *ahocorasick.Matcher, name string) bool {
 	f, err := os.Open(name)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
+	var hasError bool
 	it := m.Iter()
 	lr := linereader.New(f)
 	loff := 0
@@ -67,6 +68,7 @@ func findFile(m *ahocorasick.Matcher, name string) {
 			ev := it.Put(r)
 			if ev == nil {
 				if last != nil {
+					hasError = true
 					last.Print(lnum, loff)
 					last = nil
 				}
@@ -81,6 +83,7 @@ func findFile(m *ahocorasick.Matcher, name string) {
 				w, _ := d.Value.(*Word)
 				if w.Fix != nil {
 					if last != nil {
+						hasError = true
 						last.Print(lnum, loff)
 					}
 					last = &Found{
@@ -97,10 +100,17 @@ func findFile(m *ahocorasick.Matcher, name string) {
 					last = nil
 					continue
 				}
+				hasError = true
+				last.Print(lnum, loff)
+				last = nil
+			}
+			if last != nil {
+				hasError = true
 				last.Print(lnum, loff)
 				last = nil
 			}
 		}
 		loff += len(*l)
 	}
+	return hasError
 }
