@@ -56,15 +56,28 @@ func (c *ctx) find() error {
 	if err := c.load(); err != nil {
 		return err
 	}
-	lnum := 1
+	var (
+		lineTop = true
+		lnum = 1
+	)
 	for i, r := range c.content {
-		if r == '\n' {
-			lnum++
-			c.loffs = append(c.loffs, i+1)
+		if lineTop {
+			if r == '\n' {
+				lnum++
+				c.loffs = append(c.loffs, i+1)
+				// through
+			} else if unicode.IsSpace(r) {
+				continue
+			}
+		} else {
+			if r == '\n' {
+				lineTop = true
+				lnum++
+				c.loffs = append(c.loffs, i+1)
+				continue
+			}
 		}
-		if unicode.IsSpace(r) {
-			continue
-		}
+		lineTop = false
 		ev := c.it.Put(r)
 		if ev == nil {
 			c.flush(i)
