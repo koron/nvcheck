@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 )
 
 var (
@@ -19,7 +20,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var hasError bool
 	for _, n := range flag.Args() {
-		findFile(m, n)
+		if !findFile(m, n) {
+			hasError = true
+		}
+	}
+	if hasError {
+		os.Exit(1)
 	}
 }
