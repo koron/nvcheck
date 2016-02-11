@@ -8,7 +8,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/koron/go-debug"
 	"github.com/koron/nvcheck/internal/ahocorasick"
 )
 
@@ -19,8 +18,11 @@ var (
 type Found struct {
 	Begin int
 	End   int
-	Text  string
-	Fix   string
+	Word  *Word
+}
+
+func (f *Found) OK() bool {
+	return f.Word.Fix == nil
 }
 
 type ctx struct {
@@ -31,7 +33,6 @@ type ctx struct {
 	it      *ahocorasick.Iter
 	loffs   []int
 
-	has    bool
 	founds []*Found
 }
 
@@ -58,7 +59,7 @@ func (c *ctx) find() error {
 	}
 	var (
 		lineTop = true
-		lnum = 1
+		lnum    = 1
 	)
 	for i, r := range c.content {
 		if lineTop {
@@ -80,7 +81,6 @@ func (c *ctx) find() error {
 		lineTop = false
 		ev := c.it.Put(r)
 		if ev == nil {
-			c.flush(i)
 			continue
 		}
 		for d := ev.Next(); d != nil; d = ev.Next() {
@@ -88,44 +88,82 @@ func (c *ctx) find() error {
 			_, n := utf8.DecodeRuneInString(c.content[i:])
 			top := c.top(i+n, w.Text)
 			if top < 0 {
-				return fmt.Errorf("match failure for %q in file %s at offset %d", w.Text, c.fname, i+n)
+				return fmt.Errorf(
+					"match failure for %q in file %s at offset %d",
+					w.Text, c.fname, i+n)
 			}
-			if w.Fix != nil {
-				c.flush(i)
-				c.founds = append(c.founds, &Found{
-					Begin: top,
-					End:   i + n,
-					Text:  w.Text,
-					Fix:   *w.Fix,
-				})
-				continue
+			err := c.push(&Found{
+				Begin: top,
+				End:   i + n,
+				Word:  w,
+			})
+			if err != nil {
+				return err
 			}
-			c.flush(top)
 		}
 	}
-	c.flush(len(c.content) - 1)
-	if c.has {
+	has := false
+	for _, f := range c.founds {
+		if f.OK() {
+			continue
+		}
+		has = true
+		c.put(f)
+	}
+	if has {
 		return ErrFound
 	}
 	return nil
 }
 
-func (c *ctx) flush(top int) {
-	if len(c.founds) <= 0 {
-		return
-	}
-	debug.Printf("flush: %d", top)
-	for _, f := range c.founds {
-		if top <= f.Begin {
-			debug.Printf("  IGN: %#v", f)
-			continue
+func (c *ctx) push(f *Found) error {
+	for {
+		if len(c.founds) == 0 {
+			// case 1 in doc/optmize-found-words.pdf
+			c.founds = append(c.founds, f)
+			break
 		}
-		debug.Printf("  HIT: %#v", f)
-		lnum := c.lnum(f.Begin)
-		fmt.Printf("%s:%d: %s >> %s\n", c.fname, lnum, f.Text, f.Fix)
+		last := c.founds[len(c.founds)-1]
+		if f.End < last.End {
+			return fmt.Errorf(
+				"word %q ended at %d is before end of last word %q at %d",
+				f.Word.Text, f.End, last.Word.Text, last.End)
+		} else if f.End == last.End {
+			if f.Begin > last.Begin {
+				// case 4 in doc/optmize-found-words.pdf
+				break
+			} else if f.Begin == last.Begin {
+				// case 3 in doc/optmize-found-words.pdf with special.
+				if last.OK() != f.OK() {
+					return fmt.Errorf(
+						"word %q is registered as both good and bad word",
+						f.Word.Text)
+				}
+				break
+			}
+
+			if f.Begin >= last.Begin {
+				// case 3 and 4 in doc/optmize-found-words.pdf
+				break
+			}
+			// case 2 in doc/optmize-found-words.pdf
+			c.founds = c.founds[:len(c.founds)-1]
+		} else {
+			if f.Begin > last.Begin {
+				// case 6 in doc/optmize-found-words.pdf
+				c.founds = append(c.founds, f)
+				break
+			}
+			// case 5 in doc/optmize-found-words.pdf
+			c.founds = c.founds[:len(c.founds)-1]
+		}
 	}
-	c.has = true
-	c.founds = c.founds[:0]
+	return nil
+}
+
+func (c *ctx) put(f *Found) {
+	lnum := c.lnum(f.Begin)
+	fmt.Printf("%s:%d: %s >> %s\n", c.fname, lnum, f.Word.Text, *f.Word.Fix)
 }
 
 func (c *ctx) lnum(off int) int {
