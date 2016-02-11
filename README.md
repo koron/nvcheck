@@ -10,6 +10,10 @@ Then you can check variability like this:
 
     $ nvcheck your.txt
 
+## Dictionary Examples
+
+*   [vimdoc-ja](https://github.com/vim-jp/vimdoc-ja/blob/devel/dict.yml)
+
 ## LICENSE
 
 MIT license.  See LICENSE.
