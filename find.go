@@ -78,14 +78,20 @@ func (c *ctx) find() error {
 				c.loffs = append(c.loffs, i+1)
 				// through
 			} else if unicode.IsSpace(r) {
-				continue
+				if !c.it.Has(' ') {
+					continue
+				}
+				r = ' '
 			}
 		} else {
 			if r == '\n' {
 				lineTop = true
 				lnum++
 				c.loffs = append(c.loffs, i+1)
-				continue
+				if !c.it.Has(' ') {
+					continue
+				}
+				r = ' '
 			}
 		}
 		lineTop = false

@@ -21,6 +21,11 @@ func (it *Iter) Put(r rune) *Event {
 	}
 }
 
+func (it *Iter) Has(r rune) bool {
+	n := it.curr.Get(r)
+	return n != nil
+}
+
 func (it *Iter) Reset() {
 	it.curr = it.root
 }
