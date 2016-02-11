@@ -17,11 +17,11 @@ func checkNode(t *testing.T, node trie.Node, size int, data Data) {
 	if d == nil {
 		t.Error("Nil data:", data, node)
 	}
-	if data.pattern != nil && *d.pattern != *data.pattern {
-		t.Error("Pattern unmatched:", data, node, *d.pattern)
+	if data.Pattern != nil && *d.Pattern != *data.Pattern {
+		t.Error("Pattern unmatched:", data, node, *d.Pattern)
 	}
-	if data.value != nil && d.value != data.value {
-		t.Error("Value unmatched:", data, node, d.value)
+	if data.Value != nil && d.Value != data.Value {
+		t.Error("Value unmatched:", data, node, d.Value)
 	}
 	if d.failure == nil {
 		t.Error("Nil failure:", data, node)
@@ -39,8 +39,8 @@ func invalidData(failure trie.Node) Data {
 
 func validData(pattern string, value interface{}, failure trie.Node) Data {
 	return Data{
-		pattern: &pattern,
-		value:   value,
+		Pattern: &pattern,
+		Value:   value,
 		failure: failure.(*trie.TernaryNode),
 	}
 }
