@@ -8,6 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/koron/go-debug"
 	"github.com/koron/nvcheck/internal/ahocorasick"
 )
 
@@ -19,6 +20,15 @@ type Found struct {
 	Begin int
 	End   int
 	Word  *Word
+}
+
+func (f *Found) String() string {
+	if f.Word.Fix != nil {
+		return fmt.Sprintf("Found{Begin:%d, End:%d, Text:%q, Fix:%q}",
+		f.Begin, f.End, f.Word.Text, *f.Word.Fix)
+	}
+	return fmt.Sprintf("Found{Begin:%d, End:%d, Text:%q}",
+		f.Begin, f.End, f.Word.Text)
 }
 
 func (f *Found) OK() bool {
@@ -117,9 +127,11 @@ func (c *ctx) find() error {
 }
 
 func (c *ctx) push(f *Found) error {
+	debug.Printf("push: %s", f)
 	for {
 		if len(c.founds) == 0 {
 			// case 1 in doc/optmize-found-words.pdf
+			debug.Printf("  case 1")
 			c.founds = append(c.founds, f)
 			break
 		}
@@ -131,9 +143,11 @@ func (c *ctx) push(f *Found) error {
 		} else if f.End == last.End {
 			if f.Begin > last.Begin {
 				// case 4 in doc/optmize-found-words.pdf
+				debug.Printf("  case 4: %s", last)
 				break
 			} else if f.Begin == last.Begin {
 				// case 3 in doc/optmize-found-words.pdf with special.
+				debug.Printf("  case 3: %s", last)
 				if last.OK() != f.OK() {
 					return fmt.Errorf(
 						"word %q is registered as both good and bad word",
@@ -141,20 +155,18 @@ func (c *ctx) push(f *Found) error {
 				}
 				break
 			}
-
-			if f.Begin >= last.Begin {
-				// case 3 and 4 in doc/optmize-found-words.pdf
-				break
-			}
 			// case 2 in doc/optmize-found-words.pdf
+			debug.Printf("  case 2: %s", last)
 			c.founds = c.founds[:len(c.founds)-1]
 		} else {
 			if f.Begin > last.Begin {
 				// case 6 in doc/optmize-found-words.pdf
+				debug.Printf("  case 6: %s", last)
 				c.founds = append(c.founds, f)
 				break
 			}
 			// case 5 in doc/optmize-found-words.pdf
+			debug.Printf("  case 5: %s", last)
 			c.founds = c.founds[:len(c.founds)-1]
 		}
 	}
@@ -186,16 +198,29 @@ func (c *ctx) searchLoffs(off, start, end int) int {
 func (c *ctx) top(tail int, w string) int {
 	for len(w) > 0 {
 		if tail <= 0 {
+			debug.Printf("over backtrack: w=%q", w)
 			return -1
 		}
-		r1, n1 := utf8.DecodeLastRuneInString(c.content[:tail])
-		tail -= n1
-		if unicode.IsSpace(r1) {
+		wr, wn := utf8.DecodeLastRuneInString(w)
+		cr, cn := utf8.DecodeLastRuneInString(c.content[:tail])
+		tail -= cn
+		if unicode.IsSpace(wr) {
+			if !unicode.IsSpace(cr) {
+				// no spaces which required.
+				debug.Printf("not space: tail=%d w=%q cr=%q", tail, w, cr)
+				return -1
+			}
+			w = w[:len(w)-wn]
 			continue
 		}
-		r2, n2 := utf8.DecodeLastRuneInString(w)
-		w = w[:len(w)-n2]
-		if r1 != r2 {
+		if unicode.IsSpace(cr) {
+			continue
+		}
+		w = w[:len(w)-wn]
+		if cr != wr {
+			// didn't match runes.
+			debug.Printf("not match: tail=%d w=%q cr=%q wr=%q",
+				tail, w, cr, wr)
 			return -1
 		}
 	}
