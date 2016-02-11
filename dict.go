@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -21,7 +22,11 @@ func loadDict(name string) (Dict, error) {
 		return nil, err
 	}
 	defer f.Close()
-	b, err := ioutil.ReadAll(f)
+	return readDict(f)
+}
+
+func readDict(r io.Reader) (Dict, error) {
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

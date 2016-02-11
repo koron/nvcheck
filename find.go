@@ -56,17 +56,18 @@ func (c *ctx) load() error {
 	if err != nil {
 		return err
 	}
-	c.content = string(b)
-	c.it = c.m.Iter()
-	// it assumes that a line has 50 bytes in average.
-	c.loffs = append(make([]int, 0, len(c.content)/50+1), 0)
+	c.setup(string(b))
 	return nil
 }
 
+func (c *ctx) setup(s string) {
+	c.content = s
+	c.it = c.m.Iter()
+	// it assumes that a line has 50 bytes in average.
+	c.loffs = append(make([]int, 0, len(c.content)/50+1), 0)
+}
+
 func (c *ctx) find() error {
-	if err := c.load(); err != nil {
-		return err
-	}
 	var (
 		lineTop = true
 		lnum    = 1
@@ -118,6 +119,10 @@ func (c *ctx) find() error {
 			}
 		}
 	}
+	return nil
+}
+
+func (c *ctx) printFounds() error {
 	has := false
 	for _, f := range c.founds {
 		if f.OK() {
@@ -235,5 +240,11 @@ func (c *ctx) top(tail int, w string) int {
 
 func find(m *ahocorasick.Matcher, path string) error {
 	c := &ctx{m: m, fname: path}
-	return c.find()
+	if err := c.load(); err != nil {
+		return err
+	}
+	if err := c.find(); err != nil {
+		return err
+	}
+	return c.printFounds()
 }
