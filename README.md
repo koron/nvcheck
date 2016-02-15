@@ -12,7 +12,7 @@ Then you can check variability like this:
 
 ## Dictionary Examples
 
-*   [vimdoc-ja](https://github.com/vim-jp/vimdoc-ja/blob/devel/dict.yml)
+*   [vimdoc-ja-working](https://github.com/vim-jp/vimdoc-ja-working/blob/master/dict.yml)
 
 ## LICENSE
 
