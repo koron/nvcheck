@@ -9,8 +9,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Dict represents a dictionary of nvcheck.
 type Dict map[string][]string
 
+// Word is a pair of a correct word and its variabilities.
 type Word struct {
 	Text string
 	Fix  *string

@@ -13,7 +13,10 @@ import (
 )
 
 var (
+	// ErrFound indicate "found variability" by forFounds.
 	ErrFound = errors.New("found variability")
+
+	errCont = errors.New("continue")
 )
 
 type ctx struct {
@@ -23,6 +26,8 @@ type ctx struct {
 	content string
 	it      *ahocorasick.Iter
 	loffs   []int
+	lt      bool
+	ln      int
 
 	founds []*Found
 }
@@ -46,38 +51,47 @@ func (c *ctx) setup(s string) {
 	c.it = c.m.Iter()
 	// it assumes that a line has 50 bytes in average.
 	c.loffs = append(make([]int, 0, len(c.content)/50+1), 0)
+	c.lt = true
+	c.ln = 1
+}
+
+// parse parses a rune.
+func (c *ctx) parse(i int, r rune) (rune, error) {
+	if c.lt {
+		if r == '\n' {
+			c.ln++
+			c.loffs = append(c.loffs, i+1)
+			// through
+		} else if unicode.IsSpace(r) {
+			if !c.it.Has(' ') {
+				return 0, errCont
+			}
+			r = ' '
+		}
+	} else {
+		if r == '\n' {
+			c.lt = true
+			c.ln++
+			c.loffs = append(c.loffs, i+1)
+			if !c.it.Has(' ') {
+				return 0, errCont
+			}
+			r = ' '
+		}
+	}
+	c.lt = false
+	return r, nil
 }
 
 func (c *ctx) find() error {
-	var (
-		lineTop = true
-		lnum    = 1
-	)
 	for i, r := range c.content {
-		if lineTop {
-			if r == '\n' {
-				lnum++
-				c.loffs = append(c.loffs, i+1)
-				// through
-			} else if unicode.IsSpace(r) {
-				if !c.it.Has(' ') {
-					continue
-				}
-				r = ' '
-			}
-		} else {
-			if r == '\n' {
-				lineTop = true
-				lnum++
-				c.loffs = append(c.loffs, i+1)
-				if !c.it.Has(' ') {
-					continue
-				}
-				r = ' '
-			}
+		r2, err := c.parse(i, r)
+		if err == errCont {
+			continue
+		} else if err != nil {
+			return err
 		}
-		lineTop = false
-		ev := c.it.Put(r)
+		ev := c.it.Put(r2)
 		if ev == nil {
 			continue
 		}
