@@ -5,6 +5,13 @@ import (
 )
 
 func rewrite(m *ahocorasick.Matcher, path string) error {
-	// TODO: implement me.
-	return find(m, path)
+	c := &ctx{m: m, fname: path}
+	if err := c.load(); err != nil {
+		return err
+	}
+	if err := c.find(); err != nil {
+		return err
+	}
+	// TODO: rewrite founds
+	return nil
 }
