@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	dict = flag.String("d", "dict.yml", "variability dictionary")
+	dict  = flag.String("d", "dict.yml", "variability dictionary")
+	write = flag.Bool("w", false, "rewrite words in place")
 )
 
 func main() {
@@ -22,8 +23,12 @@ func main() {
 	}
 
 	var found bool
+	proc := find
+	if *write {
+		proc = rewrite
+	}
 	for _, n := range flag.Args() {
-		err := find(m, n)
+		err := proc(m, n)
 		if err != nil {
 			if err == ErrFound {
 				found = true
