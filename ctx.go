@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"unicode"
 	"unicode/utf8"
 
@@ -33,12 +32,7 @@ type ctx struct {
 }
 
 func (c *ctx) load() error {
-	f, err := os.Open(c.fname)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	b, err := ioutil.ReadAll(f)
+	b, err := ioutil.ReadFile(c.fname)
 	if err != nil {
 		return err
 	}
