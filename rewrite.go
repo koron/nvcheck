@@ -8,11 +8,8 @@ import (
 )
 
 func rewrite(m *ahocorasick.Matcher, path string) error {
-	c := &ctx{m: m, fname: path}
-	if err := c.load(); err != nil {
-		return err
-	}
-	if err := c.find(); err != nil {
+	c, err := newCtx(m, path)
+	if err != nil {
 		return err
 	}
 	// open file to rewrite.

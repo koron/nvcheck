@@ -31,6 +31,17 @@ type ctx struct {
 	founds []*Found
 }
 
+func newCtx(m *ahocorasick.Matcher, path string) (*ctx, error) {
+	c := &ctx{m: m, fname: path}
+	if err := c.load(); err != nil {
+		return nil, err
+	}
+	if err := c.find(); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
 func (c *ctx) load() error {
 	b, err := ioutil.ReadFile(c.fname)
 	if err != nil {
