@@ -8,6 +8,31 @@ import (
 	"testing"
 )
 
+type errs struct {
+	v []error
+}
+
+func (e errs) put(err error) {
+	if err == nil {
+		return
+	}
+	e.v = append(e.v, err)
+}
+
+func (e errs) err() error {
+	if len(e.v) == 0 {
+		return nil
+	}
+	var b bytes.Buffer
+	for i, err := range e.v {
+		if i != 0 {
+			b.WriteString(". ")
+		}
+		b.WriteString(err.Error())
+	}
+	return errors.New(b.String())
+}
+
 type found struct {
 	begin int
 	end   int
@@ -16,40 +41,30 @@ type found struct {
 }
 
 func (f *found) match(t *Found) error {
-	var errs []error
+	var errs errs
 	if f.begin != t.Begin {
-		errs = append(errs, fmt.Errorf("begin expected %d but actulaly %d",
+		errs.put(fmt.Errorf("begin expected %d but actulaly %d",
 			f.begin, t.Begin))
 	}
 	if f.end != t.End {
-		errs = append(errs, fmt.Errorf("end expected %d but actulaly %d",
+		errs.put(fmt.Errorf("end expected %d but actulaly %d",
 			f.end, t.End))
 	}
 	if f.text != t.Word.Text {
-		errs = append(errs, fmt.Errorf("text expected %q but actulaly %q",
+		errs.put(fmt.Errorf("text expected %q but actulaly %q",
 			f.text, t.Word.Text))
 	}
 	if f.fix != "" {
 		if t.Word.Fix == nil {
-			errs = append(errs, fmt.Errorf("less fix: %q", f.fix))
+			errs.put(fmt.Errorf("less fix: %q", f.fix))
 		} else if f.fix != *t.Word.Fix {
-			errs = append(errs, fmt.Errorf("fix expected %q but actulaly %q",
+			errs.put(fmt.Errorf("fix expected %q but actulaly %q",
 				f.fix, *t.Word.Fix))
 		}
 	} else if t.Word.Fix != nil {
-		errs = append(errs, fmt.Errorf("much fix: %q", *t.Word.Fix))
+		errs.put(fmt.Errorf("much fix: %q", *t.Word.Fix))
 	}
-	if len(errs) > 0 {
-		var b bytes.Buffer
-		for i, err := range errs {
-			if i != 0 {
-				b.WriteString(". ")
-			}
-			b.WriteString(err.Error())
-		}
-		return errors.New(b.String())
-	}
-	return nil
+	return errs.err()
 }
 
 func testFind(t *testing.T, d Dict, name string, expected []found, s string) {
