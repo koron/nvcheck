@@ -1,25 +1,31 @@
 package trie
 
+// TernaryTrie represents ternary trie-tree.
 type TernaryTrie struct {
 	root TernaryNode
 }
 
+// NewTernaryTrie creates a new ternary trie-tree.
 func NewTernaryTrie() *TernaryTrie {
 	return &TernaryTrie{}
 }
 
+// Root returns a root node of ternary trie-tree.
 func (t *TernaryTrie) Root() Node {
 	return &t.root
 }
 
+// Get finds a node for k if exists.
 func (t *TernaryTrie) Get(k string) Node {
 	return Get(t, k)
 }
 
+// Put puts a node for k with value v.
 func (t *TernaryTrie) Put(k string, v interface{}) Node {
 	return Put(t, k, v)
 }
 
+// Size returns count of nodes in ternary trie-tree.
 func (t *TernaryTrie) Size() int {
 	count := 0
 	EachDepth(t, func(Node) bool {
@@ -29,6 +35,7 @@ func (t *TernaryTrie) Size() int {
 	return count
 }
 
+// Balance re-balances all nodes in ternary trie-tree.
 func (t *TernaryTrie) Balance() {
 	EachDepth(t, func(n Node) bool {
 		n.(*TernaryNode).Balance()
@@ -37,6 +44,7 @@ func (t *TernaryTrie) Balance() {
 	t.root.Balance()
 }
 
+// TernaryNode represents a node of ternary trie-tree.
 type TernaryNode struct {
 	label      rune
 	firstChild *TernaryNode
@@ -44,10 +52,12 @@ type TernaryNode struct {
 	value      interface{}
 }
 
+// NewTernaryNode creates a node of ternary trie-tree.
 func NewTernaryNode(l rune) *TernaryNode {
 	return &TernaryNode{label: l}
 }
 
+// Get returns a child node which label is k if exists.
 func (n *TernaryNode) Get(k rune) Node {
 	curr := n.firstChild
 	for curr != nil {
@@ -62,6 +72,7 @@ func (n *TernaryNode) Get(k rune) Node {
 	return nil
 }
 
+// Dig creates or finds a nodes for label k.
 func (n *TernaryNode) Dig(k rune) (node Node, isnew bool) {
 	curr := n.firstChild
 	if curr == nil {
@@ -87,14 +98,17 @@ func (n *TernaryNode) Dig(k rune) (node Node, isnew bool) {
 	}
 }
 
+// FirstChild returns first child node.
 func (n *TernaryNode) FirstChild() *TernaryNode {
 	return n.firstChild
 }
 
+// HasChildren returns true if the node has some child nodes.
 func (n *TernaryNode) HasChildren() bool {
 	return n.firstChild != nil
 }
 
+// Size returns count of child nodes.
 func (n *TernaryNode) Size() int {
 	if n.firstChild == nil {
 		return 0
@@ -107,6 +121,7 @@ func (n *TernaryNode) Size() int {
 	return count
 }
 
+// Each enumerates child nodes.
 func (n *TernaryNode) Each(proc func(Node) bool) {
 	var f func(*TernaryNode) bool
 	f = func(n *TernaryNode) bool {
@@ -120,18 +135,22 @@ func (n *TernaryNode) Each(proc func(Node) bool) {
 	f(n.firstChild)
 }
 
+// RemoveAll removes all child nodes.
 func (n *TernaryNode) RemoveAll() {
 	n.firstChild = nil
 }
 
+// Label returns label rune of the node.
 func (n *TernaryNode) Label() rune {
 	return n.label
 }
 
+// Value returns value of the node.
 func (n *TernaryNode) Value() interface{} {
 	return n.value
 }
 
+// SetValue sets new value.
 func (n *TernaryNode) SetValue(v interface{}) {
 	n.value = v
 }
@@ -150,6 +169,7 @@ func (n *TernaryNode) children() []*TernaryNode {
 	return children
 }
 
+// Balance balances child nodes.
 func (n *TernaryNode) Balance() {
 	if n.firstChild == nil {
 		return
@@ -171,11 +191,10 @@ func balance(nodes []*TernaryNode, s, e int) *TernaryNode {
 	} else if count == 2 {
 		nodes[s].high = nodes[s+1]
 		return nodes[s]
-	} else {
-		mid := (s + e) / 2
-		n := nodes[mid]
-		n.low = balance(nodes, s, mid)
-		n.high = balance(nodes, mid+1, e)
-		return n
 	}
+	mid := (s + e) / 2
+	n := nodes[mid]
+	n.low = balance(nodes, s, mid)
+	n.high = balance(nodes, mid+1, e)
+	return n
 }
