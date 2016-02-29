@@ -22,3 +22,11 @@ func (f *Found) String() string {
 func (f *Found) OK() bool {
 	return f.Word.Fix == nil
 }
+
+func (f *Found) IsBegin(offset int) bool {
+	return f != nil && offset == f.Begin
+}
+
+func (f *Found) In(offset int) bool {
+	return f != nil && offset >= f.Begin && offset < f.End
+}
