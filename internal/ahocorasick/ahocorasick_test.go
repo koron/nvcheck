@@ -116,9 +116,9 @@ func TestResults(t *testing.T) {
 
 	r1 := MatchAll(m, "abcde")
 	assertMatches(t, []Match{
-		Match{0, "ab", 2},
-		Match{1, "bc", 4},
-		Match{3, "d", 7},
-		Match{0, "abcde", 10},
+		{0, "ab", 2},
+		{1, "bc", 4},
+		{3, "d", 7},
+		{0, "abcde", 10},
 	}, r1)
 }

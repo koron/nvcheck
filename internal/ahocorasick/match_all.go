@@ -4,6 +4,7 @@ import (
 	"container/list"
 )
 
+// MatchAll return all Matches for text.
 func MatchAll(m *Matcher, text string) []Match {
 	list := list.New()
 	ch := m.Match(text)

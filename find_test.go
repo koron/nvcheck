@@ -8,6 +8,31 @@ import (
 	"testing"
 )
 
+type errs struct {
+	v []error
+}
+
+func (e errs) put(err error) {
+	if err == nil {
+		return
+	}
+	e.v = append(e.v, err)
+}
+
+func (e errs) err() error {
+	if len(e.v) == 0 {
+		return nil
+	}
+	var b bytes.Buffer
+	for i, err := range e.v {
+		if i != 0 {
+			b.WriteString(". ")
+		}
+		b.WriteString(err.Error())
+	}
+	return errors.New(b.String())
+}
+
 type found struct {
 	begin int
 	end   int
@@ -16,40 +41,30 @@ type found struct {
 }
 
 func (f *found) match(t *Found) error {
-	var errs []error
+	var errs errs
 	if f.begin != t.Begin {
-		errs = append(errs, fmt.Errorf("begin expected %d but actulaly %d",
+		errs.put(fmt.Errorf("begin expected %d but actulaly %d",
 			f.begin, t.Begin))
 	}
 	if f.end != t.End {
-		errs = append(errs, fmt.Errorf("end expected %d but actulaly %d",
+		errs.put(fmt.Errorf("end expected %d but actulaly %d",
 			f.end, t.End))
 	}
 	if f.text != t.Word.Text {
-		errs = append(errs, fmt.Errorf("text expected %q but actulaly %q",
+		errs.put(fmt.Errorf("text expected %q but actulaly %q",
 			f.text, t.Word.Text))
 	}
 	if f.fix != "" {
 		if t.Word.Fix == nil {
-			errs = append(errs, fmt.Errorf("less fix: %q", f.fix))
+			errs.put(fmt.Errorf("less fix: %q", f.fix))
 		} else if f.fix != *t.Word.Fix {
-			errs = append(errs, fmt.Errorf("fix expected %q but actulaly %q",
+			errs.put(fmt.Errorf("fix expected %q but actulaly %q",
 				f.fix, *t.Word.Fix))
 		}
 	} else if t.Word.Fix != nil {
-		errs = append(errs, fmt.Errorf("much fix: %q", *t.Word.Fix))
+		errs.put(fmt.Errorf("much fix: %q", *t.Word.Fix))
 	}
-	if len(errs) > 0 {
-		var b bytes.Buffer
-		for i, err := range errs {
-			if i != 0 {
-				b.WriteString(". ")
-			}
-			b.WriteString(err.Error())
-		}
-		return errors.New(b.String())
-	}
-	return nil
+	return errs.err()
 }
 
 func testFind(t *testing.T, d Dict, name string, expected []found, s string) {
@@ -110,13 +125,13 @@ func TestFind(t *testing.T) {
 	testFind(t, d, "empty", nil, ``)
 
 	testFind(t, d, "basic", []found{
-		found{6, 18, "ユーザー", ""},
-		found{39, 48, "ユーザ", "ユーザー"},
-		found{69, 81, "サーバー", ""},
-		found{102, 111, "サーバ", "サーバー"},
-		found{141, 151, "ユーザ", "ユーザー"},
-		found{206, 219, "ユーザー", ""},
-		found{274, 283, "サーバ", "サーバー"},
+		{6, 18, "ユーザー", ""},
+		{39, 48, "ユーザ", "ユーザー"},
+		{69, 81, "サーバー", ""},
+		{102, 111, "サーバ", "サーバー"},
+		{141, 151, "ユーザ", "ユーザー"},
+		{206, 219, "ユーザー", ""},
+		{274, 283, "サーバ", "サーバー"},
 	}, `このユーザーはOKです。
 このユーザはNGです。
 このサーバーはOKです。
@@ -128,13 +143,13 @@ func TestFind(t *testing.T) {
 最終行のNG:サーバ検出`)
 
 	testFind(t, d, "first line + LF", []found{
-		found{0, 10, "ユーザ", "ユーザー"},
+		{0, 10, "ユーザ", "ユーザー"},
 	}, `ユー
 ザ(先頭の行マタギNG検出)`)
 
 	testFind(t, d, "many LF", []found{
-		found{0, 13, "ユーザー", ""},
-		found{114, 123, "ユーザ", "ユーザー"},
+		{0, 13, "ユーザー", ""},
+		{114, 123, "ユーザ", "ユーザー"},
 	}, `ユーザ
 ー(改行だけの場合は、連続しているとみなされて検出されるべきではない)
 
@@ -144,8 +159,8 @@ func TestFind(t *testing.T) {
 ー(空行を挟んだ場合は、分離しているとみなされて検出されるべき)`)
 
 	testFind(t, d, "NANI workaround", []found{
-		found{24, 30, "なに", "何"},
-		found{68, 80, "どんなに", ""},
+		{24, 30, "なに", "何"},
+		{68, 80, "どんなに", ""},
 	}, `# 検出されるべき
 なに
 
@@ -153,9 +168,9 @@ func TestFind(t *testing.T) {
 どんなに`)
 
 	testFind(t, d, "spaces in words", []found{
-		found{24, 30, "foobar", "foo bar"},
-		found{68, 75, "foo bar", ""},
-		found{113, 120, "foo bar", ""},
+		{24, 30, "foobar", "foo bar"},
+		{68, 75, "foo bar", ""},
+		{113, 120, "foo bar", ""},
 	}, `# 検出されるべき
 foobar
 

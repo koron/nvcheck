@@ -4,6 +4,7 @@ import (
 	"container/list"
 )
 
+// Trie defines operations of trie-tree.
 type Trie interface {
 	Root() Node
 	Get(string) Node
@@ -11,10 +12,12 @@ type Trie interface {
 	Size() int
 }
 
+// NewTrie creates an instance of trie-tree
 func NewTrie() Trie {
 	return NewTernaryTrie()
 }
 
+// Get returns a node for k in t.
 func Get(t Trie, k string) Node {
 	if t == nil {
 		return nil
@@ -29,6 +32,7 @@ func Get(t Trie, k string) Node {
 	return n
 }
 
+// Put inserts v as new node for k into t.
 func Put(t Trie, k string, v interface{}) Node {
 	if t == nil {
 		return nil
@@ -41,6 +45,7 @@ func Put(t Trie, k string, v interface{}) Node {
 	return n
 }
 
+// EachDepth enumerates nodes in t with depth first.
 func EachDepth(t Trie, proc func(Node) bool) {
 	if t == nil {
 		return
@@ -54,6 +59,7 @@ func EachDepth(t Trie, proc func(Node) bool) {
 	r.Each(f)
 }
 
+// EachWidth enumerates nodes in t with width first.
 func EachWidth(t Trie, proc func(Node) bool) {
 	if t == nil {
 		return
@@ -74,6 +80,7 @@ func EachWidth(t Trie, proc func(Node) bool) {
 	}
 }
 
+// Node defines operations for node of trie-tree.
 type Node interface {
 	Get(k rune) Node
 	Dig(k rune) (Node, bool)
@@ -87,6 +94,7 @@ type Node interface {
 	SetValue(v interface{})
 }
 
+// Children returns all child nodes of a node.
 func Children(n Node) []Node {
 	children := make([]Node, n.Size())
 	idx := 0

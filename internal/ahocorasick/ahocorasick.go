@@ -6,16 +6,19 @@ import (
 	"github.com/koron/nvcheck/internal/trie"
 )
 
+// Matcher is strings matcher uses aho-corasick algorithm.
 type Matcher struct {
 	trie *trie.TernaryTrie
 }
 
+// Match represents a match by Matcher.
 type Match struct {
 	Index   int
 	Pattern string
 	Value   interface{}
 }
 
+// Data represents details of match.
 type Data struct {
 	Pattern *string
 	Offset  int
@@ -24,12 +27,14 @@ type Data struct {
 	failure *trie.TernaryNode
 }
 
+// New creates a new matcher.
 func New() *Matcher {
 	return &Matcher{
 		trie: trie.NewTernaryTrie(),
 	}
 }
 
+// Add adds a string pattern with user value v.
 func (m *Matcher) Add(pattern string, v interface{}) {
 	_, n := utf8.DecodeLastRuneInString(pattern)
 	m.trie.Put(pattern, &Data{
@@ -39,6 +44,7 @@ func (m *Matcher) Add(pattern string, v interface{}) {
 	})
 }
 
+// Compile compiles a matcher for matching.
 func (m *Matcher) Compile() error {
 	m.trie.Balance()
 	root := m.trie.Root().(*trie.TernaryNode)
@@ -55,6 +61,7 @@ func (m *Matcher) Compile() error {
 	return nil
 }
 
+// Iter creates an Iter instance.
 func (m *Matcher) Iter() *Iter {
 	r := m.trie.Root().(*trie.TernaryNode)
 	return &Iter{
@@ -79,6 +86,7 @@ func fillFailure(curr, root, parent *trie.TernaryNode) {
 	data.failure = fnode
 }
 
+// Match returns a channel to stream all Matches.
 func (m *Matcher) Match(text string) <-chan Match {
 	ch := make(chan Match, 1)
 	go m.startMatch(text, ch)
