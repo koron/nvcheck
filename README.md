@@ -1,5 +1,7 @@
 # Notation Variability Checker
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/koron/nvcheck)](https://goreportcard.com/report/github.com/koron/nvcheck)
+
 Install with:
 
     $ go get -u github.com/koron/nvcheck
