@@ -33,3 +33,16 @@ func (f *Found) IsBeginAndFix(offset int) bool {
 func (f *Found) In(offset int) bool {
 	return f != nil && offset >= f.Begin && offset < f.End
 }
+
+type foundIter func() *Found
+
+func nextFoundIter(founds []*Found) foundIter {
+	return func() *Found {
+		if len(founds) == 0 {
+			return nil
+		}
+		f := founds[0]
+		founds = founds[1:]
+		return f
+	}
+}
