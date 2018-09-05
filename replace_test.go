@@ -40,4 +40,10 @@ func TestReplace(t *testing.T) {
 	testReplace(t, d, "word includes white 1", "foo bar", "foo bar")
 	testReplace(t, d, "word includes white 2", "foo  bar", "foo  bar")
 	testReplace(t, d, "word includes white 3", "foo\nbar", "foo\nbar")
+
+	testReplace(t, d, "long to short", "FooBarBaz", "FBB")
+	testReplace(t, d, "long to short with pref post", "AbcFooBarBazDef", "AbcFBBDef")
+
+	testReplace(t, d, "short to long", "QQ", "QuxQuux")
+	testReplace(t, d, "short to long with pref post", "AbcQQDef", "AbcQuxQuuxDef")
 }

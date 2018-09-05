@@ -86,6 +86,9 @@ func replaceFounds(c *ctx, w io.Writer) error {
 				}
 			}
 			if f {
+				if len(fix) == 0 {
+					continue
+				}
 				r, fix = fix[0], fix[1:]
 			}
 		}

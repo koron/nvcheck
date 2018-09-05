@@ -109,6 +109,12 @@ const dict0 = `
 
 foo bar:
   - foobar
+
+FBB:
+  - FooBarBaz
+
+QuxQuux:
+  - QQ
 `
 
 func parseDict(t *testing.T, s string) Dict {
