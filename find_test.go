@@ -12,14 +12,14 @@ type errs struct {
 	v []error
 }
 
-func (e errs) put(err error) {
+func (e *errs) put(err error) {
 	if err == nil {
 		return
 	}
 	e.v = append(e.v, err)
 }
 
-func (e errs) err() error {
+func (e *errs) err() error {
 	if len(e.v) == 0 {
 		return nil
 	}
