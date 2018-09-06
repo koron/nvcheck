@@ -12,14 +12,14 @@ type errs struct {
 	v []error
 }
 
-func (e errs) put(err error) {
+func (e *errs) put(err error) {
 	if err == nil {
 		return
 	}
 	e.v = append(e.v, err)
 }
 
-func (e errs) err() error {
+func (e *errs) err() error {
 	if len(e.v) == 0 {
 		return nil
 	}
@@ -131,7 +131,9 @@ func TestFind(t *testing.T) {
 		{102, 111, "サーバ", "サーバー"},
 		{141, 151, "ユーザ", "ユーザー"},
 		{206, 219, "ユーザー", ""},
-		{274, 283, "サーバ", "サーバー"},
+		{296, 310, "ユーザ", "ユーザー"},
+		{387, 404, "ユーザー", ""},
+		{459, 468, "サーバ", "サーバー"},
 	}, `このユーザーはOKです。
 このユーザはNGです。
 このサーバーはOKです。
@@ -140,6 +142,10 @@ func TestFind(t *testing.T) {
 ザを検出できるかのチェック。
 行マタギのユー
 ザーを検出できるかのチェック。
+    インデントと行マタギのユー
+    ザを検出できるかのチェック。
+    インデントと行マタギのユー
+    ザーを検出できるかのチェック。
 最終行のNG:サーバ検出`)
 
 	testFind(t, d, "first line + LF", []found{
