@@ -4,7 +4,7 @@
 
 Install with:
 
-    $ go get -u github.com/koron/nvcheck
+    $ go install github.com/koron/nvcheck@latest
 
 Next create a dict.yml file for your documents.
 
